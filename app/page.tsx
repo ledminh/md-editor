@@ -1,64 +1,108 @@
-import Image from "next/image";
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CanvasPanel } from "@/app/components/CanvasPanel";
+import { S3Controls } from "@/app/components/S3Controls";
+import { S3FileList } from "@/app/components/S3FileList";
+import { StudioHeader } from "@/app/components/StudioHeader";
+import { useClipboard } from "@/app/hooks/useClipboard";
+import { pageStyle, starterMarkdown } from "@/app/lib/constants";
+import { listS3Files, normalizeFileName, saveS3File } from "@/app/lib/s3-client";
+import type { S3File, ViewMode } from "@/app/lib/types";
 
 export default function Home() {
+  const [markdown, setMarkdown] = useState(starterMarkdown);
+  const [viewMode, setViewMode] = useState<ViewMode>("split");
+  const [swapSides, setSwapSides] = useState(false);
+  const [fileName, setFileName] = useState("notes.md");
+  const [files, setFiles] = useState<S3File[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const { copyMessage, copyToClipboard } = useClipboard();
+
+  const normalizedFileName = useMemo(
+    () => normalizeFileName(fileName),
+    [fileName]
+  );
+
+  const loadFiles = useCallback(async () => {
+    setIsLoadingFiles(true);
+    try {
+      const data = await listS3Files();
+      setFiles(data);
+    } catch (error) {
+      setStatusMessage(
+        error instanceof Error ? error.message : "Unable to load files."
+      );
+    } finally {
+      setIsLoadingFiles(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadFiles();
+  }, [loadFiles]);
+
+  const handleCopy = useCallback(() => {
+    void copyToClipboard(markdown);
+  }, [copyToClipboard, markdown]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setStatusMessage(null);
+    try {
+      await saveS3File(normalizedFileName, markdown);
+      setStatusMessage(`Saved ${normalizedFileName}.`);
+      await loadFiles();
+    } catch (error) {
+      setStatusMessage(
+        error instanceof Error ? error.message : "Unable to save file."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div
+      className="min-h-screen bg-[radial-gradient(70%_120%_at_10%_0%,#ffe8c3_0%,rgba(255,255,255,0)_60%),radial-gradient(80%_100%_at_100%_20%,#d9e9ff_0%,rgba(255,255,255,0)_55%),linear-gradient(160deg,#fffdf8_0%,#f2f7ff_45%,#f9eef9_100%)] text-zinc-900"
+      style={pageStyle}
+    >
+      <main className="mx-auto flex h-screen w-full flex-col px-4 py-4 md:px-8">
+        <StudioHeader
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onSwapSides={() => setSwapSides((prev) => !prev)}
+          onCopy={handleCopy}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        <section className="mt-4 flex min-h-0 flex-1 flex-col gap-6">
+          <CanvasPanel
+            markdown={markdown}
+            onMarkdownChange={setMarkdown}
+            viewMode={viewMode}
+            swapSides={swapSides}
+            normalizedFileName={normalizedFileName}
+            copyMessage={copyMessage}
+            statusMessage={statusMessage}
+          />
+
+          <aside className="grid gap-6 md:grid-cols-2">
+            <S3Controls
+              fileName={fileName}
+              onFileNameChange={setFileName}
+              onSave={handleSave}
+              isSaving={isSaving}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            <S3FileList
+              files={files}
+              isLoading={isLoadingFiles}
+              onRefresh={loadFiles}
+            />
+          </aside>
+        </section>
       </main>
     </div>
   );
