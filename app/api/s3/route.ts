@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
+import { Readable } from "stream";
 
 export const runtime = "nodejs";
 
@@ -21,9 +27,42 @@ const sanitizeKey = (key: string) => {
   return trimmed.endsWith(".md") ? trimmed : `${trimmed}.md`;
 };
 
-export async function GET() {
+const streamToString = async (stream: Readable) => {
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of stream) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks).toString("utf-8");
+};
+
+export async function GET(request: Request) {
   try {
     const { client, bucket } = getClient();
+    const { searchParams } = new URL(request.url);
+    const keyParam = searchParams.get("key");
+    if (keyParam) {
+      const key = sanitizeKey(keyParam);
+      if (!key || key === ".md") {
+        return NextResponse.json(
+          { error: "Invalid file name." },
+          { status: 400 }
+        );
+      }
+      const response = await client.send(
+        new GetObjectCommand({
+          Bucket: bucket,
+          Key: key,
+        })
+      );
+      if (!response.Body || !(response.Body instanceof Readable)) {
+        return NextResponse.json(
+          { error: "Unable to read file content." },
+          { status: 500 }
+        );
+      }
+      const content = await streamToString(response.Body);
+      return NextResponse.json({ key, content });
+    }
     const response = await client.send(
       new ListObjectsV2Command({
         Bucket: bucket,

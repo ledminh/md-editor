@@ -7,7 +7,12 @@ import { S3FileList } from "@/app/components/S3FileList";
 import { StudioHeader } from "@/app/components/StudioHeader";
 import { useClipboard } from "@/app/hooks/useClipboard";
 import { pageStyle, starterMarkdown } from "@/app/lib/constants";
-import { listS3Files, normalizeFileName, saveS3File } from "@/app/lib/s3-client";
+import {
+  fetchS3File,
+  listS3Files,
+  normalizeFileName,
+  saveS3File,
+} from "@/app/lib/s3-client";
 import type { S3File, ViewMode } from "@/app/lib/types";
 
 export default function Home() {
@@ -65,6 +70,23 @@ export default function Home() {
     }
   };
 
+  const handleSelectFile = useCallback(
+    async (file: S3File) => {
+      setStatusMessage(null);
+      try {
+        const data = await fetchS3File(file.key);
+        setMarkdown(data.content);
+        setFileName(data.key);
+        setStatusMessage(`Loaded ${data.key}.`);
+      } catch (error) {
+        setStatusMessage(
+          error instanceof Error ? error.message : "Unable to load file."
+        );
+      }
+    },
+    []
+  );
+
   return (
     <div
       className="min-h-screen bg-[radial-gradient(70%_120%_at_10%_0%,#ffe8c3_0%,rgba(255,255,255,0)_60%),radial-gradient(80%_100%_at_100%_20%,#d9e9ff_0%,rgba(255,255,255,0)_55%),linear-gradient(160deg,#fffdf8_0%,#f2f7ff_45%,#f9eef9_100%)] text-zinc-900"
@@ -100,6 +122,7 @@ export default function Home() {
               files={files}
               isLoading={isLoadingFiles}
               onRefresh={loadFiles}
+              onSelect={handleSelectFile}
             />
           </aside>
         </section>

@@ -32,3 +32,21 @@ export const saveS3File = async (key: string, content: string) => {
     throw new Error(message);
   }
 };
+
+export const fetchS3File = async (key: string) => {
+  const response = await fetch(`/api/s3?key=${encodeURIComponent(key)}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    let message = "Load failed.";
+    try {
+      const data = (await response.json()) as { error?: string };
+      message = data.error || message;
+    } catch {
+      // Ignore JSON parse errors and fall back to the default message.
+    }
+    throw new Error(message);
+  }
+  const data = (await response.json()) as { key: string; content: string };
+  return data;
+};
