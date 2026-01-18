@@ -25,7 +25,7 @@ export const StudioHeader = ({
       </h1>
       <p className="max-w-xl text-sm text-zinc-600">
         Switch layouts, expand panels, and send clean markdown straight to your
-        S3 bucket.
+        Postgres database.
       </p>
     </div>
     <div className="flex flex-wrap items-center gap-3">

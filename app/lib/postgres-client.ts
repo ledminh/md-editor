@@ -1,21 +1,21 @@
-import type { S3File } from "@/app/lib/types";
+import type { MarkdownFile } from "@/app/lib/types";
 
 export const normalizeFileName = (fileName: string) => {
   const trimmed = fileName.trim() || "untitled.md";
   return trimmed.endsWith(".md") ? trimmed : `${trimmed}.md`;
 };
 
-export const listS3Files = async (): Promise<S3File[]> => {
-  const response = await fetch("/api/s3", { cache: "no-store" });
+export const listPostgresFiles = async (): Promise<MarkdownFile[]> => {
+  const response = await fetch("/api/postgres", { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Failed to load files.");
   }
-  const data = (await response.json()) as { files?: S3File[] };
+  const data = (await response.json()) as { files?: MarkdownFile[] };
   return data.files ?? [];
 };
 
-export const saveS3File = async (key: string, content: string) => {
-  const response = await fetch("/api/s3", {
+export const savePostgresFile = async (key: string, content: string) => {
+  const response = await fetch("/api/postgres", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, content }),
@@ -33,8 +33,8 @@ export const saveS3File = async (key: string, content: string) => {
   }
 };
 
-export const fetchS3File = async (key: string) => {
-  const response = await fetch(`/api/s3?key=${encodeURIComponent(key)}`, {
+export const fetchPostgresFile = async (key: string) => {
+  const response = await fetch(`/api/postgres?key=${encodeURIComponent(key)}`, {
     cache: "no-store",
   });
   if (!response.ok) {

@@ -2,25 +2,25 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CanvasPanel } from "@/app/components/CanvasPanel";
-import { S3Controls } from "@/app/components/S3Controls";
-import { S3FileList } from "@/app/components/S3FileList";
+import { PostgresControls } from "@/app/components/PostgresControls";
+import { PostgresFileList } from "@/app/components/PostgresFileList";
 import { StudioHeader } from "@/app/components/StudioHeader";
 import { useClipboard } from "@/app/hooks/useClipboard";
 import { pageStyle, starterMarkdown } from "@/app/lib/constants";
 import {
-  fetchS3File,
-  listS3Files,
+  fetchPostgresFile,
+  listPostgresFiles,
   normalizeFileName,
-  saveS3File,
-} from "@/app/lib/s3-client";
-import type { S3File, ViewMode } from "@/app/lib/types";
+  savePostgresFile,
+} from "@/app/lib/postgres-client";
+import type { MarkdownFile, ViewMode } from "@/app/lib/types";
 
 export default function Home() {
   const [markdown, setMarkdown] = useState(starterMarkdown);
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [swapSides, setSwapSides] = useState(false);
   const [fileName, setFileName] = useState("notes.md");
-  const [files, setFiles] = useState<S3File[]>([]);
+  const [files, setFiles] = useState<MarkdownFile[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function Home() {
   const loadFiles = useCallback(async () => {
     setIsLoadingFiles(true);
     try {
-      const data = await listS3Files();
+      const data = await listPostgresFiles();
       setFiles(data);
     } catch (error) {
       setStatusMessage(
@@ -58,7 +58,7 @@ export default function Home() {
     setIsSaving(true);
     setStatusMessage(null);
     try {
-      await saveS3File(normalizedFileName, markdown);
+      await savePostgresFile(normalizedFileName, markdown);
       setStatusMessage(`Saved ${normalizedFileName}.`);
       await loadFiles();
     } catch (error) {
@@ -71,10 +71,10 @@ export default function Home() {
   };
 
   const handleSelectFile = useCallback(
-    async (file: S3File) => {
+    async (file: MarkdownFile) => {
       setStatusMessage(null);
       try {
-        const data = await fetchS3File(file.key);
+        const data = await fetchPostgresFile(file.key);
         setMarkdown(data.content);
         setFileName(data.key);
         setStatusMessage(`Loaded ${data.key}.`);
@@ -112,13 +112,13 @@ export default function Home() {
           />
 
           <aside className="grid gap-6 md:grid-cols-2">
-            <S3Controls
+            <PostgresControls
               fileName={fileName}
               onFileNameChange={setFileName}
               onSave={handleSave}
               isSaving={isSaving}
             />
-            <S3FileList
+            <PostgresFileList
               files={files}
               isLoading={isLoadingFiles}
               onRefresh={loadFiles}

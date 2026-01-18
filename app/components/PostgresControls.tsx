@@ -1,19 +1,19 @@
-type S3ControlsProps = {
+type PostgresControlsProps = {
   fileName: string;
   onFileNameChange: (value: string) => void;
   onSave: () => void;
   isSaving: boolean;
 };
 
-export const S3Controls = ({
+export const PostgresControls = ({
   fileName,
   onFileNameChange,
   onSave,
   isSaving,
-}: S3ControlsProps) => (
+}: PostgresControlsProps) => (
   <div className="rounded-3xl border border-white/70 bg-white/80 p-5 shadow-[0_20px_60px_-45px_rgba(31,41,55,0.5)] backdrop-blur">
     <h2 className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
-      Save to S3
+      Save to Postgres
     </h2>
     <label className="mt-4 block text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">
       File name

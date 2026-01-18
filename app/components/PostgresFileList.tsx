@@ -1,22 +1,22 @@
-import type { S3File } from "@/app/lib/types";
+import type { MarkdownFile } from "@/app/lib/types";
 import { formatDate, formatFileSize } from "@/app/lib/format";
 
-type S3FileListProps = {
-  files: S3File[];
+type PostgresFileListProps = {
+  files: MarkdownFile[];
   isLoading: boolean;
   onRefresh: () => void;
-  onSelect: (file: S3File) => void;
+  onSelect: (file: MarkdownFile) => void;
 };
 
-export const S3FileList = ({
+export const PostgresFileList = ({
   files,
   isLoading,
   onRefresh,
   onSelect,
-}: S3FileListProps) => (
+}: PostgresFileListProps) => (
   <div className="rounded-3xl border border-white/70 bg-white/80 p-5 shadow-[0_20px_60px_-45px_rgba(31,41,55,0.5)] backdrop-blur">
     <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
-      <span>S3 Files</span>
+      <span>Postgres Files</span>
       <button
         type="button"
         onClick={onRefresh}
