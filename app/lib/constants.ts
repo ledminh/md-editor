@@ -6,7 +6,7 @@ Write in the editor. Preview on the right.
 
 - Swap sides for left-right control
 - Focus one panel to take the full page
-- Save to S3 and track your files
+- Save to DynamoDB and track your files
 
 \`\`\`ts
 const message = "Ship it.";
