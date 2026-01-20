@@ -10,7 +10,12 @@ if (!connectionString) {
   throw new Error("Missing Postgres configuration.");
 }
 
-const pool = new Pool({ connectionString });
+const useSsl = process.env.POSTGRES_SSL === "true";
+const pool = new Pool({
+  connectionString,
+  ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+  connectionTimeoutMillis: 5000,
+});
 let tableReady = false;
 
 const ensureTable = async () => {
