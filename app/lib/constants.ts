@@ -6,7 +6,8 @@ Write in the editor. Preview on the right.
 
 - Swap sides for left-right control
 - Focus one panel to take the full page
-- Save to Postgres and track your files
+- Save markdown in S3 with tags stored in DynamoDB
+- Add comma-separated tags for quick filtering later
 
 \`\`\`ts
 const message = "Ship it.";

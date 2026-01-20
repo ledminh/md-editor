@@ -1,24 +1,30 @@
-import type { MarkdownFile } from "@/app/lib/types";
+import type { BlogPostMeta } from "@/app/lib/types";
 
 export const normalizeFileName = (fileName: string) => {
   const trimmed = fileName.trim() || "untitled.md";
   return trimmed.endsWith(".md") ? trimmed : `${trimmed}.md`;
 };
 
-export const listPostgresFiles = async (): Promise<MarkdownFile[]> => {
-  const response = await fetch("/api/postgres", { cache: "no-store" });
+export const listBlogPosts = async (tag?: string): Promise<BlogPostMeta[]> => {
+  const url = tag ? `/api/posts?tag=${encodeURIComponent(tag)}` : "/api/posts";
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) {
-    throw new Error("Failed to load files.");
+    throw new Error("Failed to load posts.");
   }
-  const data = (await response.json()) as { files?: MarkdownFile[] };
-  return data.files ?? [];
+  const data = (await response.json()) as { posts?: BlogPostMeta[] };
+  return data.posts ?? [];
 };
 
-export const savePostgresFile = async (key: string, content: string) => {
-  const response = await fetch("/api/postgres", {
+export const saveBlogPost = async (
+  key: string,
+  title: string,
+  content: string,
+  tags: string[]
+) => {
+  const response = await fetch("/api/posts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ key, content }),
+    body: JSON.stringify({ key, title, content, tags }),
   });
 
   if (!response.ok) {
@@ -33,8 +39,8 @@ export const savePostgresFile = async (key: string, content: string) => {
   }
 };
 
-export const fetchPostgresFile = async (key: string) => {
-  const response = await fetch(`/api/postgres?key=${encodeURIComponent(key)}`, {
+export const fetchBlogPost = async (key: string) => {
+  const response = await fetch(`/api/posts?key=${encodeURIComponent(key)}`, {
     cache: "no-store",
   });
   if (!response.ok) {
@@ -47,6 +53,11 @@ export const fetchPostgresFile = async (key: string) => {
     }
     throw new Error(message);
   }
-  const data = (await response.json()) as { key: string; content: string };
+  const data = (await response.json()) as {
+    key: string;
+    title: string;
+    content: string;
+    tags: string[];
+  };
   return data;
 };

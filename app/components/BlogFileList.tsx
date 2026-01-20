@@ -1,22 +1,22 @@
-import type { MarkdownFile } from "@/app/lib/types";
+import type { BlogPostMeta } from "@/app/lib/types";
 import { formatDate, formatFileSize } from "@/app/lib/format";
 
-type PostgresFileListProps = {
-  files: MarkdownFile[];
+type BlogFileListProps = {
+  files: BlogPostMeta[];
   isLoading: boolean;
   onRefresh: () => void;
-  onSelect: (file: MarkdownFile) => void;
+  onSelect: (file: BlogPostMeta) => void;
 };
 
-export const PostgresFileList = ({
+export const BlogFileList = ({
   files,
   isLoading,
   onRefresh,
   onSelect,
-}: PostgresFileListProps) => (
+}: BlogFileListProps) => (
   <div className="rounded-3xl border border-white/70 bg-white/80 p-5 shadow-[0_20px_60px_-45px_rgba(31,41,55,0.5)] backdrop-blur">
     <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
-      <span>Postgres Files</span>
+      <span>Blog posts</span>
       <button
         type="button"
         onClick={onRefresh}
@@ -35,10 +35,25 @@ export const PostgresFileList = ({
           onClick={() => onSelect(file)}
           className="w-full rounded-2xl border border-zinc-100 bg-white px-3 py-2 text-left transition hover:border-zinc-200 hover:bg-zinc-50"
         >
-          <p className="text-xs font-semibold text-zinc-700">{file.key}</p>
+          <p className="text-xs font-semibold text-zinc-700">{file.title}</p>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-zinc-400">
+            {file.key}
+          </p>
           <p className="text-[11px] text-zinc-400">
             {formatDate(file.lastModified)} - {formatFileSize(file.size)}
           </p>
+          {file.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {file.tags.map((tag) => (
+                <span
+                  key={`${file.key}-${tag}`}
+                  className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-zinc-500"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </button>
       ))}
     </div>
