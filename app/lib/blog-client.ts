@@ -61,3 +61,19 @@ export const fetchBlogPost = async (key: string) => {
   };
   return data;
 };
+
+export const deleteBlogPost = async (key: string) => {
+  const response = await fetch(`/api/posts?key=${encodeURIComponent(key)}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    let message = "Delete failed.";
+    try {
+      const data = (await response.json()) as { error?: string };
+      message = data.error || message;
+    } catch {
+      // Ignore JSON parse errors and fall back to the default message.
+    }
+    throw new Error(message);
+  }
+};

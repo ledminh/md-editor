@@ -8,6 +8,7 @@ import { StudioHeader } from "@/app/components/StudioHeader";
 import { useClipboard } from "@/app/hooks/useClipboard";
 import { pageStyle, starterMarkdown } from "@/app/lib/constants";
 import {
+  deleteBlogPost,
   fetchBlogPost,
   listBlogPosts,
   normalizeFileName,
@@ -96,6 +97,28 @@ export default function Home() {
     []
   );
 
+  const handleDeleteFile = useCallback(
+    async (file: BlogPostMeta) => {
+      const shouldDelete = window.confirm(
+        `Delete "${file.title}"? This cannot be undone.`
+      );
+      if (!shouldDelete) {
+        return;
+      }
+      setStatusMessage(null);
+      try {
+        await deleteBlogPost(file.key);
+        setStatusMessage(`Deleted ${file.title}.`);
+        await loadFiles();
+      } catch (error) {
+        setStatusMessage(
+          error instanceof Error ? error.message : "Unable to delete post."
+        );
+      }
+    },
+    [loadFiles]
+  );
+
   return (
     <div
       className="min-h-screen bg-[radial-gradient(70%_120%_at_10%_0%,#ffe8c3_0%,rgba(255,255,255,0)_60%),radial-gradient(80%_100%_at_100%_20%,#d9e9ff_0%,rgba(255,255,255,0)_55%),linear-gradient(160deg,#fffdf8_0%,#f2f7ff_45%,#f9eef9_100%)] text-zinc-900"
@@ -172,6 +195,7 @@ export default function Home() {
               isLoading={isLoadingFiles}
               onRefresh={loadFiles}
               onSelect={handleSelectFile}
+              onDelete={handleDeleteFile}
             />
           </aside>
         </section>

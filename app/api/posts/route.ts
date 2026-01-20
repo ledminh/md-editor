@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
+  DeleteCommand,
   GetCommand,
   PutCommand,
   ScanCommand,
@@ -224,6 +230,58 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to save post.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { s3, dynamo, bucket, table } = getClients();
+    const { searchParams } = new URL(request.url);
+    const keyParam = searchParams.get("key");
+    if (!keyParam) {
+      return NextResponse.json(
+        { error: "A file name is required." },
+        { status: 400 }
+      );
+    }
+    const key = sanitizeKey(keyParam);
+    if (!key || key === ".md") {
+      return NextResponse.json(
+        { error: "Invalid file name." },
+        { status: 400 }
+      );
+    }
+
+    const metaResponse = await dynamo.send(
+      new GetCommand({
+        TableName: table,
+        Key: { key },
+      })
+    );
+    if (!metaResponse.Item) {
+      return NextResponse.json({ error: "Post not found." }, { status: 404 });
+    }
+
+    const s3Key = metaResponse.Item.s3Key as string;
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: s3Key,
+      })
+    );
+
+    await dynamo.send(
+      new DeleteCommand({
+        TableName: table,
+        Key: { key },
+      })
+    );
+
+    return NextResponse.json({ ok: true, key });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unable to delete post.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
