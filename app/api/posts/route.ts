@@ -48,8 +48,8 @@ const normalizeTags = (tags: unknown) => {
       tags
         .filter((tag) => typeof tag === "string")
         .map((tag) => tag.trim())
-        .filter(Boolean)
-    )
+        .filter(Boolean),
+    ),
   );
 };
 
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
       if (!key || key === ".md") {
         return NextResponse.json(
           { error: "Invalid file name." },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
         new GetCommand({
           TableName: table,
           Key: { key },
-        })
+        }),
       );
 
       if (!metaResponse.Item) {
@@ -98,12 +98,12 @@ export async function GET(request: Request) {
         new GetObjectCommand({
           Bucket: bucket,
           Key: s3Key,
-        })
+        }),
       );
       if (!s3Response.Body || !(s3Response.Body instanceof Readable)) {
         return NextResponse.json(
           { error: "Unable to read post content." },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -119,7 +119,7 @@ export async function GET(request: Request) {
     const response = await dynamo.send(
       new ScanCommand({
         TableName: table,
-      })
+      }),
     );
     const posts = (response.Items ?? [])
       .map((item) => ({
@@ -133,12 +133,12 @@ export async function GET(request: Request) {
       .filter((item) =>
         tagParam
           ? item.tags.some(
-              (tag) => tag.toLowerCase() === tagParam.toLowerCase()
+              (tag) => tag.toLowerCase() === tagParam.toLowerCase(),
             )
-          : true
+          : true,
       )
       .sort((a, b) =>
-        (b.lastModified ?? "").localeCompare(a.lastModified ?? "")
+        (b.lastModified ?? "").localeCompare(a.lastModified ?? ""),
       );
 
     return NextResponse.json({ posts });
@@ -162,21 +162,21 @@ export async function POST(request: Request) {
     if (!body?.key || typeof body.key !== "string") {
       return NextResponse.json(
         { error: "A file name is required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (typeof body.content !== "string") {
       return NextResponse.json(
         { error: "Markdown content is required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!body.title || typeof body.title !== "string") {
       return NextResponse.json(
         { error: "A title is required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
     if (!key || key === ".md") {
       return NextResponse.json(
         { error: "Invalid file name." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -200,14 +200,14 @@ export async function POST(request: Request) {
         Key: s3Key,
         Body: body.content,
         ContentType: "text/markdown; charset=utf-8",
-      })
+      }),
     );
 
     const existing = await dynamo.send(
       new GetCommand({
         TableName: table,
         Key: { key },
-      })
+      }),
     );
     const createdAt = (existing.Item?.createdAt as string) ?? now;
 
@@ -223,7 +223,7 @@ export async function POST(request: Request) {
           createdAt,
           updatedAt: now,
         },
-      })
+      }),
     );
 
     return NextResponse.json({ ok: true, key });
@@ -242,14 +242,14 @@ export async function DELETE(request: Request) {
     if (!keyParam) {
       return NextResponse.json(
         { error: "A file name is required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const key = sanitizeKey(keyParam);
     if (!key || key === ".md") {
       return NextResponse.json(
         { error: "Invalid file name." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -257,7 +257,7 @@ export async function DELETE(request: Request) {
       new GetCommand({
         TableName: table,
         Key: { key },
-      })
+      }),
     );
     if (!metaResponse.Item) {
       return NextResponse.json({ error: "Post not found." }, { status: 404 });
@@ -268,14 +268,14 @@ export async function DELETE(request: Request) {
       new DeleteObjectCommand({
         Bucket: bucket,
         Key: s3Key,
-      })
+      }),
     );
 
     await dynamo.send(
       new DeleteCommand({
         TableName: table,
         Key: { key },
-      })
+      }),
     );
 
     return NextResponse.json({ ok: true, key });
